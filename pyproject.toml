@@ -5,7 +5,10 @@ description = ""
 requires-python = ">=3.13"
 dependencies = [
     "mm-std~=0.4.12",
+    "typer~=0.15.4",
 ]
+[project.scripts]
+mm-okx = "mm_okx.cli.app:app"
 
 [build-system]
 requires = ["hatchling"]
