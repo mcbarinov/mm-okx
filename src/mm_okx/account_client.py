@@ -3,12 +3,13 @@ import hmac
 import json
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any, TypeAlias, cast
+from typing import Any, cast
+from urllib.parse import urlencode
 
-from mm_std import Err, Ok, Result, add_query_params_to_url, hr
+from mm_std import Result, http_request
 from pydantic import BaseModel, Field
 
-JsonType: TypeAlias = dict[str, Any]
+type JsonType = dict[str, Any]
 
 
 class Currency(BaseModel):
@@ -16,10 +17,10 @@ class Currency(BaseModel):
     chain: str
     can_dep: bool = Field(..., alias="canDep")
     can_wd: bool = Field(..., alias="canWd")
-    maxFee: Decimal
-    minFee: Decimal
-    maxWd: Decimal
-    minWd: Decimal
+    max_fee: Decimal = Field(..., alias="maxFee")
+    min_fee: Decimal = Field(..., alias="minFee")
+    max_wd: Decimal = Field(..., alias="maxWd")
+    min_wd: Decimal = Field(..., alias="minWd")
 
 
 class Balance(BaseModel):
@@ -75,110 +76,112 @@ class Transfer(BaseModel):
 
 
 class AccountClient:
-    def __init__(self, api_key: str, passphrase: str, secret_key: str, proxy: str | None):
+    def __init__(self, api_key: str, passphrase: str, secret_key: str, proxy: str | None) -> None:
         self.api_key = api_key
         self.passphrase = passphrase
         self.secret_key = secret_key
         self.base_url = "https://www.okx.com"
         self.proxy = proxy
 
-    def get_currencies(self, ccy: str | None = None) -> Result[list[Currency]]:
+    async def get_currencies(self, ccy: str | None = None) -> Result[list[Currency]]:
         res = None
         try:
-            res = self._send_get("/api/v5/asset/currencies", {"ccy": ccy})
-            return Ok([Currency(**c) for c in res["data"]], res)
-        except Exception as err:
-            return Err(err, res)
+            res = await self._send_get("/api/v5/asset/currencies", {"ccy": ccy})
+            return Result.ok([Currency(**c) for c in res["data"]], {"response": res})
+        except Exception as e:
+            return Result.err(e, {"response": res})
 
-    def get_funding_balances(self, ccy: str | None = None) -> Result[list[Balance]]:
+    async def get_funding_balances(self, ccy: str | None = None) -> Result[list[Balance]]:
         res = None
         try:
-            res = self._send_get("/api/v5/asset/balances", {"ccy": ccy})
-            balances = []
-            for item in res["data"]:
-                balances.append(Balance(ccy=item["ccy"], avail=item["availBal"], frozen=item["frozenBal"]))
-            return Ok(balances, res)
-        except Exception as err:
-            return Err(err, res)
+            res = await self._send_get("/api/v5/asset/balances", {"ccy": ccy})
+            balances = [Balance(ccy=item["ccy"], avail=item["availBal"], frozen=item["frozenBal"]) for item in res["data"]]
 
-    def get_trading_balances(self, ccy: str | None = None) -> Result[list[Balance]]:
+            return Result.ok(balances, {"response": res})
+        except Exception as e:
+            return Result.err(e, {"response": res})
+
+    async def get_trading_balances(self, ccy: str | None = None) -> Result[list[Balance]]:
         res = None
         try:
-            res = self._send_get("/api/v5/account/balance", {"ccy": ccy})
-            balances = []
-            for item in res["data"][0]["details"]:
-                balances.append(Balance(ccy=item["ccy"], avail=item["availBal"], frozen=item["frozenBal"]))
-            return Ok(balances, res)
-        except Exception as err:
-            return Err(err, res)
+            res = await self._send_get("/api/v5/account/balance", {"ccy": ccy})
+            balances = [Balance(ccy=i["ccy"], avail=i["availBal"], frozen=i["frozenBal"]) for i in res["data"][0]["details"]]
+            return Result.ok(balances, {"response": res})
+        except Exception as e:
+            return Result.err(e, {"response": res})
 
-    def get_deposit_address(self, ccy: str) -> Result[list[DepositAddress]]:
+    async def get_deposit_address(self, ccy: str) -> Result[list[DepositAddress]]:
         res = None
         try:
-            res = self._send_get("/api/v5/asset/deposit-address", {"ccy": ccy})
-            return Ok([DepositAddress(**a) for a in res["data"]], res)
-        except Exception as err:
-            return Err(err, res)
+            res = await self._send_get("/api/v5/asset/deposit-address", {"ccy": ccy})
+            return Result.ok([DepositAddress(**a) for a in res["data"]], {"response": res})
+        except Exception as e:
+            return Result.err(e, {"response": res})
 
-    def get_deposit_history(self, ccy: str | None = None) -> Result[list[DepositHistory]]:
+    async def get_deposit_history(self, ccy: str | None = None) -> Result[list[DepositHistory]]:
         res = None
         try:
-            res = self._send_get("/api/v5/asset/deposit-history", {"ccy": ccy})
-            return Ok([DepositHistory(**d) for d in res["data"]], res)
-        except Exception as err:
-            return Err(err, res)
+            res = await self._send_get("/api/v5/asset/deposit-history", {"ccy": ccy})
+            return Result.ok([DepositHistory(**d) for d in res["data"]], {"response": res})
+        except Exception as e:
+            return Result.err(e, {"response": res})
 
-    def get_withdrawal_history(self, ccy: str | None = None, wd_id: str | None = None) -> Result[list[WithdrawalHistory]]:
+    async def get_withdrawal_history(self, ccy: str | None = None, wd_id: str | None = None) -> Result[list[WithdrawalHistory]]:
         res = None
         try:
-            res = self._send_get("/api/v5/asset/withdrawal-history", {"ccy": ccy, "wdId": wd_id})
-            return Ok([WithdrawalHistory(**h) for h in res["data"]], res)
-        except Exception as err:
-            return Err(err, res)
+            res = await self._send_get("/api/v5/asset/withdrawal-history", {"ccy": ccy, "wdId": wd_id})
+            return Result.ok([WithdrawalHistory(**h) for h in res["data"]], {"response": res})
+        except Exception as e:
+            return Result.err(e, {"response": res})
 
-    def withdraw(
+    async def withdraw(
         self, *, ccy: str, amt: Decimal, fee: Decimal, to_addr: str, chain: str | None = None
     ) -> Result[list[Withdrawal]]:
         res = None
         params = {"ccy": ccy, "amt": str(amt), "dest": "4", "toAddr": to_addr, "fee": str(fee), "chain": chain}
         try:
-            res = self._send_post("/api/v5/asset/withdrawal", params)
+            res = await self._send_post("/api/v5/asset/withdrawal", params)
             result = [Withdrawal(**w) for w in res["data"]]
             if result:
-                return Ok(result, res)
-            elif res.get("code") == "58207":
-                return Err("withdrawal_address_not_whitelisted", res)
-            else:
-                return Err("error", res)
-        except Exception as err:
-            return Err(err, res)
+                return Result.ok(result, {"response": res})
+            if res.get("code") == "58207":
+                return Result.err("withdrawal_address_not_whitelisted", {"response": res})
+            return Result.err("error", {"response": res})
+        except Exception as e:
+            return Result.err(e, {"response": res})
 
-    def transfer_to_funding(self, ccy: str, amt: Decimal) -> Result[list[Transfer]]:
+    async def transfer_to_funding(self, ccy: str, amt: Decimal) -> Result[list[Transfer]]:
         res = None
         try:
-            res = self._send_post("/api/v5/asset/transfer", {"ccy": ccy, "amt": str(amt), "from": "18", "to": "6", "type": "0"})
-            return Ok([Transfer(**t) for t in res["data"]], res)
-        except Exception as err:
-            return Err(err, res)
+            res = await self._send_post(
+                "/api/v5/asset/transfer", {"ccy": ccy, "amt": str(amt), "from": "18", "to": "6", "type": "0"}
+            )
+            return Result.ok([Transfer(**t) for t in res["data"]], {"response": res})
+        except Exception as e:
+            return Result.err(e, {"response": res})
 
-    def transfer_to_trading(self, ccy: str, amt: Decimal) -> Result[list[Transfer]]:
+    async def transfer_to_trading(self, ccy: str, amt: Decimal) -> Result[list[Transfer]]:
         res = None
         try:
-            res = self._send_post("/api/v5/asset/transfer", {"ccy": ccy, "amt": str(amt), "from": "6", "to": "18", "type": "0"})
-            return Ok([Transfer(**t) for t in res["data"]], res)
-        except Exception as err:
-            return Err(err, res)
+            res = await self._send_post(
+                "/api/v5/asset/transfer", {"ccy": ccy, "amt": str(amt), "from": "6", "to": "18", "type": "0"}
+            )
+            return Result.ok([Transfer(**t) for t in res["data"]], {"response": res})
+        except Exception as e:
+            return Result.err(e, {"response": res})
 
-    def transfer_to_parent(self, ccy: str, amount: Decimal) -> Result[list[Transfer]]:
-        # type = 3: sub-account to master account (Only applicable to APIKey from subaccount)
+    async def transfer_to_parent(self, ccy: str, amount: Decimal) -> Result[list[Transfer]]:
+        # type = 3: subaccount to master account (Only applicable to APIKey from subaccount)
         res = None
         try:
-            res = self._send_post("/api/v5/asset/transfer", {"ccy": ccy, "amt": str(amount), "from": "6", "to": "6", "type": "3"})
-            return Ok([Transfer(**t) for t in res["data"]], res)
-        except Exception as err:
-            return Err(err, res)
+            res = await self._send_post(
+                "/api/v5/asset/transfer", {"ccy": ccy, "amt": str(amount), "from": "6", "to": "6", "type": "3"}
+            )
+            return Result.ok([Transfer(**t) for t in res["data"]], {"response": res})
+        except Exception as e:
+            return Result.err(e, {"response": res})
 
-    def buy_market(self, inst_id: str, sz: Decimal) -> Result[str]:
+    async def buy_market(self, inst_id: str, sz: Decimal) -> Result[str]:
         """
         Place a market order, side=buy
         :param inst_id: for example, BTC-ETH
@@ -187,12 +190,12 @@ class AccountClient:
         res = None
         params = {"instId": inst_id, "tdMode": "cash", "side": "buy", "ordType": "market", "sz": str(sz)}
         try:
-            res = self._send_post("/api/v5/trade/order", params)
-            return Ok(res["data"][0]["ordId"], res)
-        except Exception as err:
-            return Err(err, res)
+            res = await self._send_post("/api/v5/trade/order", params)
+            return Result.ok(res["data"][0]["ordId"], {"response": res})
+        except Exception as e:
+            return Result.err(e, {"response": res})
 
-    def sell_market(self, inst_id: str, sz: Decimal) -> Result[str]:
+    async def sell_market(self, inst_id: str, sz: Decimal) -> Result[str]:
         """
         Place a market order, side=sell
         :param inst_id: for example, BTC-ETH
@@ -201,24 +204,24 @@ class AccountClient:
         res = None
         params = {"instId": inst_id, "tdMode": "cash", "side": "sell", "ordType": "market", "sz": str(sz)}
         try:
-            res = self._send_post("/api/v5/trade/order", params)
-            return Ok(res["data"][0]["ordId"], res)
-        except Exception as err:
-            return Err(err, res)
+            res = await self._send_post("/api/v5/trade/order", params)
+            return Result.ok(res["data"][0]["ordId"], {"response": res})
+        except Exception as e:
+            return Result.err(e, {"response": res})
 
-    def get_order_history(self, instrument_id: str = "") -> JsonType:
+    async def get_order_history(self, instrument_id: str = "") -> JsonType:
         url = "/api/v5/trade/orders-history-archive?instType=SPOT"
         if instrument_id:
             url += f"&instId={instrument_id}"
-        return self._request("GET", url)
+        return await self._request("GET", url)
 
-    def _send_get(self, request_path: str, query_params: dict[str, object] | None = None) -> JsonType:
-        return self._request("GET", request_path, query_params=query_params)
+    async def _send_get(self, request_path: str, query_params: dict[str, object] | None = None) -> JsonType:
+        return await self._request("GET", request_path, query_params=query_params)
 
-    def _send_post(self, request_path: str, body: dict[str, Any] | str = "") -> JsonType:
-        return self._request("POST", request_path, body=body)
+    async def _send_post(self, request_path: str, body: dict[str, Any] | str = "") -> JsonType:
+        return await self._request("POST", request_path, body=body)
 
-    def _request(
+    async def _request(
         self, method: str, request_path: str, *, body: dict[str, Any] | str = "", query_params: dict[str, object] | None = None
     ) -> JsonType:
         method = method.upper()
@@ -229,15 +232,15 @@ class AccountClient:
         signature = sign(message, self.secret_key)
         headers = {
             "OK-ACCESS-KEY": self.api_key,
-            "OK-ACCESS-SIGN": signature,
+            "OK-ACCESS-SIGN": signature.decode(),
             "OK-ACCESS-TIMESTAMP": timestamp,
             "OK-ACCESS-PASSPHRASE": self.passphrase,
         }
         params = None
         if isinstance(body, dict):
             params = body
-        res = hr(self.base_url + request_path, method=method, headers=headers, params=params, proxy=self.proxy)
-        return cast(JsonType, res.json)
+        res = await http_request(self.base_url + request_path, method=method, data=params, headers=headers, proxy=self.proxy)
+        return cast(JsonType, res.parse_json_body())
 
 
 def pre_hash(timestamp: str, method: str, request_path: str, body: JsonType | str) -> str:
@@ -254,3 +257,7 @@ def sign(message: str, secret_key: str) -> bytes:
 
 def get_timestamp() -> str:
     return datetime.now(tz=UTC).isoformat(sep="T", timespec="milliseconds").removesuffix("+00:00") + "Z"
+
+
+def add_query_params_to_url(url: str, params: dict[str, object]) -> str:
+    return f"{url}?{urlencode(params)}" if params else url

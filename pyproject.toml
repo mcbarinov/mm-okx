@@ -1,67 +1,76 @@
 [project]
 name = "mm-okx"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
-    "mm-std~=0.1.0",
+    "mm-std~=0.4.12",
 ]
-[project.optional-dependencies]
-dev = [
-    "build~=1.2.1",
-    "twine~=5.1.0",
-    "pytest~=8.3.2",
-    "pytest-xdist~=3.6.1",
-    "pytest-httpserver~=1.0.8",
-    "coverage~=7.6.0",
-    "ruff~=0.5.2",
-    "pip-audit~=2.7.0",
-    "bandit~=1.7.7",
-    "mypy~=1.11.0",
-    "types-python-dateutil~=2.9.0",
-    "types-requests~=2.32.0.20240523",
-    "types-PyYAML~=6.0.12.12",
-]
-
 
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
+[tool.uv]
+dev-dependencies = [
+    "pytest~=8.3.5",
+    "pytest-asyncio~=0.26.0",
+    "pytest-xdist~=3.6.1",
+    "mypy~=1.15.0",
+    "ruff~=0.11.7",
+    "pip-audit~=2.9.0",
+    "bandit~=1.8.3",
+    "pre-commit~=4.2.0",
+]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 warn_no_return = false
 strict = true
-enable_error_code = ["truthy-bool", "possibly-undefined"]
 exclude = ["^tests/", "^tmp/"]
-
 
 [tool.ruff]
 line-length = 130
-target-version = "py312"
-lint.select = [
-    "F", # Pyflakes
-    "E", "W", # pycodestyle
-    "B", # flake8-bugbear
-    "A", # flake8-builtins
-    "COM", # flake8-commas
-    "C40", # flake8-comprehensions
-    "G", # flake8-logging-format
-    "PIE", # flake8-pie
-    "T20", # flake8-print
-    "RUF", # Ruff-specific rules
+target-version = "py313"
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "TC", # flake8-type-checking, TYPE_CHECKING is dangerous, for example it doesn't work with pydantic
+    "A005", # flake8-builtins: stdlib-module-shadowing
+    "ERA001", # eradicate: commented-out-code
+    "PT", # flake8-pytest-style
+    "D", # pydocstyle
+    "FIX", # flake8-fixme
+    "PLR0911", # pylint: too-many-return-statements
+    "PLR0912", # pylint: too-many-branches
+    "PLR0913", # pylint: too-many-arguments
+    "PLR2004", # pylint: magic-value-comparison
+    "PLC0414", # pylint: useless-import-alias
+    "FBT", # flake8-boolean-trap
+    "EM", # flake8-errmsg
+    "TRY003", # tryceratops: raise-vanilla-args
+    "C901", # mccabe: complex-structure,
+    "BLE001", # flake8-blind-except
+    "S311", # bandit: suspicious-non-cryptographic-random-usage
+    "TD002", # flake8-todos: missing-todo-author
+    "TD003", # flake8-todos: missing-todo-link
+    "RET503", # flake8-return: implicit-return
+    "COM812", # it's used in ruff formatter
+    "ASYNC109",
+    "G004"
 ]
-lint.ignore = [
-    "A003", # builtin-attribute-shadowing
-    "UP040", # non-pep695-type-alias
-    "COM812"
-]
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = ["field_validator"]
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["ANN", "S"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 
-
 [tool.bandit]
 exclude_dirs = ["tests"]
 skips = ["B311"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
