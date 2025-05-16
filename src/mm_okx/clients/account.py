@@ -3,10 +3,11 @@ import hmac
 import json
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any, cast
+from pathlib import Path
+from typing import Any, Self, cast
 from urllib.parse import urlencode
 
-from mm_std import Result, http_request
+from mm_std import Result, http_request, toml_loads
 from pydantic import BaseModel, Field
 
 type JsonType = dict[str, Any]
@@ -75,13 +76,29 @@ class Transfer(BaseModel):
     to: str
 
 
+class AccountConfig(BaseModel):
+    api_key: str
+    secret_key: str
+    passphrase: str
+    proxy: str | None = None
+
+    @classmethod
+    def from_toml_file(cls, path: Path) -> Self:
+        """
+        Load the configuration from a TOML file.
+        """
+
+        config = toml_loads(path.read_text())
+        return cls(**config)
+
+
 class AccountClient:
-    def __init__(self, api_key: str, passphrase: str, secret_key: str, proxy: str | None) -> None:
-        self.api_key = api_key
-        self.passphrase = passphrase
-        self.secret_key = secret_key
+    def __init__(self, config: AccountConfig) -> None:
+        self.api_key = config.api_key
+        self.passphrase = config.passphrase
+        self.secret_key = config.secret_key
         self.base_url = "https://www.okx.com"
-        self.proxy = proxy
+        self.proxy = config.proxy
 
     async def get_currencies(self, ccy: str | None = None) -> Result[list[Currency]]:
         res = None
@@ -209,10 +226,10 @@ class AccountClient:
         except Exception as e:
             return Result.err(e, {"response": res})
 
-    async def get_order_history(self, instrument_id: str = "") -> JsonType:
+    async def get_order_history(self, inst_id: str | None = None) -> JsonType:
         url = "/api/v5/trade/orders-history-archive?instType=SPOT"
-        if instrument_id:
-            url += f"&instId={instrument_id}"
+        if inst_id:
+            url += f"&instId={inst_id}"
         return await self._request("GET", url)
 
     async def _send_get(self, request_path: str, query_params: dict[str, object] | None = None) -> JsonType:
