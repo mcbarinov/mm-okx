@@ -188,7 +188,7 @@ class AccountClient:
             return Result.err(e, {"response": res})
 
     async def transfer_to_parent(self, ccy: str, amount: Decimal) -> Result[list[Transfer]]:
-        # type = 3: subaccount to master account (Only applicable to APIKey from subaccount)
+        # type = 3: sub-account to master account (Only applicable to APIKey from sub-account)
         res = None
         try:
             res = await self._send_post(
