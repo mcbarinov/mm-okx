@@ -1,4 +1,4 @@
-from mm_okx.clients.account import get_timestamp
+from mm_okx.api.account import get_timestamp
 
 
 def test_get_timestamp():

@@ -81,6 +81,7 @@ class Transfer(BaseModel):
 
 
 class AccountConfig(BaseModel):
+    name: str
     api_key: str
     secret_key: str
     passphrase: str
@@ -98,11 +99,12 @@ class AccountConfig(BaseModel):
 
 class AccountClient:
     def __init__(self, config: AccountConfig) -> None:
+        self.name = config.name
         self.api_key = config.api_key
         self.passphrase = config.passphrase
         self.secret_key = config.secret_key
-        self.base_url = "https://www.okx.com"
         self.proxy = config.proxy
+        self.base_url = "https://www.okx.com"
 
     async def get_currencies(self, ccy: str | None = None) -> Result[list[Currency]]:
         res = None
@@ -233,8 +235,8 @@ class AccountClient:
     async def buy_market(self, inst_id: str, sz: Decimal) -> Result[str]:
         """
         Place a market order, side=buy
-        :param inst_id: for example, BTC-ETH
-        :param sz: for example, Decimal("0.123")
+        :param inst_id: for example, ETH-USDT
+        :param sz: for example, Decimal("100.0"), buy 100 USDT worth of ETH
         """
         res = None
         params = {"instId": inst_id, "tdMode": "cash", "side": "buy", "ordType": "market", "sz": str(sz)}
