@@ -1,11 +1,15 @@
-from pathlib import Path
+from mm_std import print_table
 
-from mm_std import print_json
+from mm_okx.cli.commands.account_commands import BaseAccountParams
+from mm_okx.cli.utils import print_debug_or_error
+from mm_okx.clients.account import AccountClient
 
-from mm_okx.clients.account import AccountClient, AccountConfig
 
-
-async def run(account: Path, ccy: str | None = None) -> None:
-    client = AccountClient(AccountConfig.from_toml_file(account))
+async def run(params: BaseAccountParams, ccy: str | None) -> None:
+    client = AccountClient(params.account)
     res = await client.get_trading_balances(ccy)
-    print_json(res)
+    print_debug_or_error(res, params.debug)
+
+    headers = ["ccy", "avail", "frozen"]
+    rows = [[b.ccy, b.avail, b.frozen] for b in res.unwrap()]
+    print_table("Trading Balances", headers, rows)
