@@ -1,16 +1,20 @@
 import base64
 import hmac
 import json
+import logging
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Self, cast
 from urllib.parse import urlencode
 
-from mm_std import Result, http_request, toml_loads
+from mm_std import Result, http_request, replace_empty_dict_values, toml_loads
 from pydantic import BaseModel, Field
 
 type JsonType = dict[str, Any]
+
+
+logger = logging.getLogger(__name__)
 
 
 class Currency(BaseModel):
@@ -103,17 +107,24 @@ class AccountClient:
     async def get_currencies(self, ccy: str | None = None) -> Result[list[Currency]]:
         res = None
         try:
-            res = await self._send_get("/api/v5/asset/currencies", {"ccy": ccy})
-            return Result.ok([Currency(**c) for c in res["data"]], {"response": res})
+            params = {"ccy": ccy} if ccy else None
+            res = await self._send_get("/api/v5/asset/currencies", params)
+            if res.is_err():
+                return Result.err(res.unwrap_error(), res.extra)
+            return Result.ok([Currency(**c) for c in res.unwrap()["data"]], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
 
     async def get_funding_balances(self, ccy: str | None = None) -> Result[list[Balance]]:
         res = None
         try:
-            res = await self._send_get("/api/v5/asset/balances", {"ccy": ccy})
-            balances = [Balance(ccy=item["ccy"], avail=item["availBal"], frozen=item["frozenBal"]) for item in res["data"]]
-
+            params = {"ccy": ccy} if ccy else None
+            res = await self._send_get("/api/v5/asset/balances", params)
+            if res.is_err():
+                return Result.err(res.unwrap_error(), res.extra)
+            balances = [
+                Balance(ccy=item["ccy"], avail=item["availBal"], frozen=item["frozenBal"]) for item in res.unwrap()["data"]
+            ]
             return Result.ok(balances, {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
@@ -121,8 +132,13 @@ class AccountClient:
     async def get_trading_balances(self, ccy: str | None = None) -> Result[list[Balance]]:
         res = None
         try:
-            res = await self._send_get("/api/v5/account/balance", {"ccy": ccy})
-            balances = [Balance(ccy=i["ccy"], avail=i["availBal"], frozen=i["frozenBal"]) for i in res["data"][0]["details"]]
+            params = {"ccy": ccy} if ccy else None
+            res = await self._send_get("/api/v5/account/balance", params)
+            if res.is_err():
+                return Result.err(res.unwrap_error(), res.extra)
+            balances = [
+                Balance(ccy=i["ccy"], avail=i["availBal"], frozen=i["frozenBal"]) for i in res.unwrap()["data"][0]["details"]
+            ]
             return Result.ok(balances, {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
@@ -131,23 +147,31 @@ class AccountClient:
         res = None
         try:
             res = await self._send_get("/api/v5/asset/deposit-address", {"ccy": ccy})
-            return Result.ok([DepositAddress(**a) for a in res["data"]], {"response": res})
+            if res.is_err():
+                return Result.err(res.unwrap_error(), res.extra)
+            return Result.ok([DepositAddress(**a) for a in res.unwrap()["data"]], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
 
     async def get_deposit_history(self, ccy: str | None = None) -> Result[list[DepositHistory]]:
         res = None
         try:
-            res = await self._send_get("/api/v5/asset/deposit-history", {"ccy": ccy})
-            return Result.ok([DepositHistory(**d) for d in res["data"]], {"response": res})
+            params = replace_empty_dict_values({"ccy": ccy})
+            res = await self._send_get("/api/v5/asset/deposit-history", params)
+            if res.is_err():
+                return Result.err(res.unwrap_error(), res.extra)
+            return Result.ok([DepositHistory(**d) for d in res.unwrap()["data"]], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
 
     async def get_withdrawal_history(self, ccy: str | None = None, wd_id: str | None = None) -> Result[list[WithdrawalHistory]]:
         res = None
         try:
-            res = await self._send_get("/api/v5/asset/withdrawal-history", {"ccy": ccy, "wdId": wd_id})
-            return Result.ok([WithdrawalHistory(**h) for h in res["data"]], {"response": res})
+            params = replace_empty_dict_values({"ccy": ccy, "wdId": wd_id})
+            res = await self._send_get("/api/v5/asset/withdrawal-history", params)
+            if res.is_err():
+                return Result.err(res.unwrap_error(), res.extra)
+            return Result.ok([WithdrawalHistory(**h) for h in res.unwrap()["data"]], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
 
@@ -158,11 +182,13 @@ class AccountClient:
         params = {"ccy": ccy, "amt": str(amt), "dest": "4", "toAddr": to_addr, "fee": str(fee), "chain": chain}
         try:
             res = await self._send_post("/api/v5/asset/withdrawal", params)
-            result = [Withdrawal(**w) for w in res["data"]]
+            if res.is_err():
+                return Result.err(res.unwrap_error(), res.extra)
+            result = [Withdrawal(**w) for w in res.unwrap()["data"]]
             if result:
                 return Result.ok(result, {"response": res})
-            if res.get("code") == "58207":
-                return Result.err("withdrawal_address_not_whitelisted", {"response": res})
+            # if res.get("code") == "58207":
+            #     return Result.err("withdrawal_address_not_whitelisted", {"response": res})
             return Result.err("error", {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
@@ -173,7 +199,9 @@ class AccountClient:
             res = await self._send_post(
                 "/api/v5/asset/transfer", {"ccy": ccy, "amt": str(amt), "from": "18", "to": "6", "type": "0"}
             )
-            return Result.ok([Transfer(**t) for t in res["data"]], {"response": res})
+            if res.is_err():
+                return Result.err(res.unwrap_error(), res.extra)
+            return Result.ok([Transfer(**t) for t in res.unwrap()["data"]], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
 
@@ -183,7 +211,9 @@ class AccountClient:
             res = await self._send_post(
                 "/api/v5/asset/transfer", {"ccy": ccy, "amt": str(amt), "from": "6", "to": "18", "type": "0"}
             )
-            return Result.ok([Transfer(**t) for t in res["data"]], {"response": res})
+            if res.is_err():
+                return Result.err(res.unwrap_error(), res.extra)
+            return Result.ok([Transfer(**t) for t in res.unwrap()["data"]], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
 
@@ -194,7 +224,9 @@ class AccountClient:
             res = await self._send_post(
                 "/api/v5/asset/transfer", {"ccy": ccy, "amt": str(amount), "from": "6", "to": "6", "type": "3"}
             )
-            return Result.ok([Transfer(**t) for t in res["data"]], {"response": res})
+            if res.is_err():
+                return Result.err(res.unwrap_error(), res.extra)
+            return Result.ok([Transfer(**t) for t in res.unwrap()["data"]], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
 
@@ -208,7 +240,9 @@ class AccountClient:
         params = {"instId": inst_id, "tdMode": "cash", "side": "buy", "ordType": "market", "sz": str(sz)}
         try:
             res = await self._send_post("/api/v5/trade/order", params)
-            return Result.ok(res["data"][0]["ordId"], {"response": res})
+            if res.is_err():
+                return Result.err(res.unwrap_error(), res.extra)
+            return Result.ok(res.unwrap()["data"][0]["ordId"], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
 
@@ -222,25 +256,30 @@ class AccountClient:
         params = {"instId": inst_id, "tdMode": "cash", "side": "sell", "ordType": "market", "sz": str(sz)}
         try:
             res = await self._send_post("/api/v5/trade/order", params)
-            return Result.ok(res["data"][0]["ordId"], {"response": res})
+            if res.is_err():
+                return Result.err(res.unwrap_error(), res.extra)
+            return Result.ok(res.unwrap()["data"][0]["ordId"], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
 
-    async def get_order_history(self, inst_id: str | None = None) -> JsonType:
+    async def get_order_history(self, inst_id: str | None = None) -> Result[JsonType]:
         url = "/api/v5/trade/orders-history-archive?instType=SPOT"
         if inst_id:
             url += f"&instId={inst_id}"
         return await self._request("GET", url)
 
-    async def _send_get(self, request_path: str, query_params: dict[str, object] | None = None) -> JsonType:
+    async def _send_get(self, request_path: str, query_params: dict[str, Any] | None = None) -> Result[JsonType]:
         return await self._request("GET", request_path, query_params=query_params)
 
-    async def _send_post(self, request_path: str, body: dict[str, Any] | str = "") -> JsonType:
+    async def _send_post(self, request_path: str, body: dict[str, Any] | str = "") -> Result[JsonType]:
         return await self._request("POST", request_path, body=body)
 
     async def _request(
         self, method: str, request_path: str, *, body: dict[str, Any] | str = "", query_params: dict[str, object] | None = None
-    ) -> JsonType:
+    ) -> Result[JsonType]:
+        logger.debug(
+            "request", extra={"method": method, "request_path": request_path, "body": body, "query_params": query_params}
+        )
         method = method.upper()
         if method == "GET" and query_params:
             request_path = add_query_params_to_url(request_path, query_params)
@@ -256,8 +295,16 @@ class AccountClient:
         params = None
         if isinstance(body, dict):
             params = body
-        res = await http_request(self.base_url + request_path, method=method, data=params, headers=headers, proxy=self.proxy)
-        return cast(JsonType, res.parse_json_body())
+        res = await http_request(self.base_url + request_path, method=method, json=params, headers=headers, proxy=self.proxy)
+        if res.is_err():
+            return res.to_err()
+
+        json_body = res.parse_json_body()
+        if json_body.get("code") != "0":
+            error_msg = f"{json_body.get('msg')}, code: {json_body.get('code')}"
+            return Result.err(error_msg, {"response": res.to_dict()})
+
+        return res.to_ok(cast(JsonType, json_body))
 
 
 def pre_hash(timestamp: str, method: str, request_path: str, body: JsonType | str) -> str:

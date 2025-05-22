@@ -1,13 +1,17 @@
 from pathlib import Path
 
-from mm_std import fatal, print_table
+from mm_std import fatal, print_json, print_table
 
 from mm_okx.clients.account import AccountClient, AccountConfig
 
 
-async def run(account: Path, ccy: str | None = None) -> None:
+async def run(account: Path, ccy: str | None, debug: bool) -> None:
     client = AccountClient(AccountConfig.from_toml_file(account))
     res = await client.get_currencies(ccy)
+    if debug:
+        print_json(res)
+        return
+
     if res.is_err():
         fatal(res.unwrap_error())
 
@@ -25,5 +29,4 @@ async def run(account: Path, ccy: str | None = None) -> None:
         ]
         for currency in res.unwrap()
     ]
-
-    print_table(title="Currencies", columns=headers, rows=rows)
+    print_table("Currencies", headers, rows)
