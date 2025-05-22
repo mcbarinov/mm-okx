@@ -424,7 +424,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mm-std", specifier = "~=0.4.15" },
+    { name = "mm-std", specifier = "~=0.4.16" },
     { name = "typer", specifier = "~=0.15.4" },
 ]
 
@@ -442,7 +442,7 @@ dev = [
 
 [[package]]
 name = "mm-std"
-version = "0.4.15"
+version = "0.4.16"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -457,7 +457,7 @@ dependencies = [
     { name = "tomlkit" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d9/4a/3673a81ba04b2f9a623d9f2e64f461868633e36f14632f7de65f96df3e68/mm_std-0.4.15-py3-none-any.whl", hash = "sha256:743ac2858bfc5158cd1c3d6cc4ca0d7b433fa66ba7525a9a761d71e8fe47dd03", size = 24457, upload-time = "2025-05-20T14:32:27.511Z" },
+    { url = "https://files.pythonhosted.org/packages/44/ec/17a59e390d6f22616c0cb1a7f2b52f004a60da2b4e8bc241fcec8780060c/mm_std-0.4.16-py3-none-any.whl", hash = "sha256:cd3847a2e1acc5cce2cff42b73cdb092152c5a9d737da33cb2c2b34d25dd5eda", size = 24727, upload-time = "2025-05-22T07:06:40.782Z" },
 ]
 
 [[package]]

@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Self, cast
 from urllib.parse import urlencode
 
-from mm_std import Result, http_request, replace_empty_dict_values, toml_loads
+from mm_std import Result, http_request, replace_empty_dict_entries, toml_loads
 from pydantic import BaseModel, Field
 
 type JsonType = dict[str, Any]
@@ -156,7 +156,7 @@ class AccountClient:
     async def get_deposit_history(self, ccy: str | None = None) -> Result[list[DepositHistory]]:
         res = None
         try:
-            params = replace_empty_dict_values({"ccy": ccy})
+            params = replace_empty_dict_entries({"ccy": ccy})
             res = await self._send_get("/api/v5/asset/deposit-history", params)
             if res.is_err():
                 return Result.err(res.unwrap_error(), res.extra)
@@ -167,7 +167,7 @@ class AccountClient:
     async def get_withdrawal_history(self, ccy: str | None = None, wd_id: str | None = None) -> Result[list[WithdrawalHistory]]:
         res = None
         try:
-            params = replace_empty_dict_values({"ccy": ccy, "wdId": wd_id})
+            params = replace_empty_dict_entries({"ccy": ccy, "wdId": wd_id})
             res = await self._send_get("/api/v5/asset/withdrawal-history", params)
             if res.is_err():
                 return Result.err(res.unwrap_error(), res.extra)
