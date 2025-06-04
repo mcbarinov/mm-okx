@@ -8,8 +8,11 @@ from pathlib import Path
 from typing import Any, Self, cast
 from urllib.parse import urlencode
 
-from mm_std import Result, http_request, replace_empty_dict_entries, toml_loads
+from mm_http import http_request
+from mm_result import Result
 from pydantic import BaseModel, Field
+
+from mm_okx.utils import replace_empty_dict_entries, toml_loads
 
 type JsonType = dict[str, Any]
 
@@ -112,7 +115,7 @@ class AccountClient:
             params = {"ccy": ccy} if ccy else None
             res = await self._send_get("/api/v5/asset/currencies", params)
             if res.is_err():
-                return Result.err(res.unwrap_error(), res.extra)
+                return Result.err(res.expect_error(), res.extra)
             return Result.ok([Currency(**c) for c in res.unwrap()["data"]], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
@@ -123,7 +126,7 @@ class AccountClient:
             params = {"ccy": ccy} if ccy else None
             res = await self._send_get("/api/v5/asset/balances", params)
             if res.is_err():
-                return Result.err(res.unwrap_error(), res.extra)
+                return Result.err(res.expect_error(), res.extra)
             balances = [
                 Balance(ccy=item["ccy"], avail=item["availBal"], frozen=item["frozenBal"]) for item in res.unwrap()["data"]
             ]
@@ -137,7 +140,7 @@ class AccountClient:
             params = {"ccy": ccy} if ccy else None
             res = await self._send_get("/api/v5/account/balance", params)
             if res.is_err():
-                return Result.err(res.unwrap_error(), res.extra)
+                return Result.err(res.expect_error(), res.extra)
             balances = [
                 Balance(ccy=i["ccy"], avail=i["availBal"], frozen=i["frozenBal"]) for i in res.unwrap()["data"][0]["details"]
             ]
@@ -150,7 +153,7 @@ class AccountClient:
         try:
             res = await self._send_get("/api/v5/asset/deposit-address", {"ccy": ccy})
             if res.is_err():
-                return Result.err(res.unwrap_error(), res.extra)
+                return Result.err(res.expect_error(), res.extra)
             return Result.ok([DepositAddress(**a) for a in res.unwrap()["data"]], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
@@ -161,7 +164,7 @@ class AccountClient:
             params = replace_empty_dict_entries({"ccy": ccy})
             res = await self._send_get("/api/v5/asset/deposit-history", params)
             if res.is_err():
-                return Result.err(res.unwrap_error(), res.extra)
+                return Result.err(res.expect_error(), res.extra)
             return Result.ok([DepositHistory(**d) for d in res.unwrap()["data"]], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
@@ -172,7 +175,7 @@ class AccountClient:
             params = replace_empty_dict_entries({"ccy": ccy, "wdId": wd_id})
             res = await self._send_get("/api/v5/asset/withdrawal-history", params)
             if res.is_err():
-                return Result.err(res.unwrap_error(), res.extra)
+                return Result.err(res.expect_error(), res.extra)
             return Result.ok([WithdrawalHistory(**h) for h in res.unwrap()["data"]], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
@@ -185,7 +188,7 @@ class AccountClient:
         try:
             res = await self._send_post("/api/v5/asset/withdrawal", params)
             if res.is_err():
-                return Result.err(res.unwrap_error(), res.extra)
+                return Result.err(res.expect_error(), res.extra)
             result = [Withdrawal(**w) for w in res.unwrap()["data"]]
             if result:
                 return Result.ok(result, {"response": res})
@@ -202,7 +205,7 @@ class AccountClient:
                 "/api/v5/asset/transfer", {"ccy": ccy, "amt": str(amt), "from": "18", "to": "6", "type": "0"}
             )
             if res.is_err():
-                return Result.err(res.unwrap_error(), res.extra)
+                return Result.err(res.expect_error(), res.extra)
             return Result.ok([Transfer(**t) for t in res.unwrap()["data"]], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
@@ -214,7 +217,7 @@ class AccountClient:
                 "/api/v5/asset/transfer", {"ccy": ccy, "amt": str(amt), "from": "6", "to": "18", "type": "0"}
             )
             if res.is_err():
-                return Result.err(res.unwrap_error(), res.extra)
+                return Result.err(res.expect_error(), res.extra)
             return Result.ok([Transfer(**t) for t in res.unwrap()["data"]], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
@@ -227,7 +230,7 @@ class AccountClient:
                 "/api/v5/asset/transfer", {"ccy": ccy, "amt": str(amount), "from": "6", "to": "6", "type": "3"}
             )
             if res.is_err():
-                return Result.err(res.unwrap_error(), res.extra)
+                return Result.err(res.expect_error(), res.extra)
             return Result.ok([Transfer(**t) for t in res.unwrap()["data"]], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
@@ -243,7 +246,7 @@ class AccountClient:
         try:
             res = await self._send_post("/api/v5/trade/order", params)
             if res.is_err():
-                return Result.err(res.unwrap_error(), res.extra)
+                return Result.err(res.expect_error(), res.extra)
             return Result.ok(res.unwrap()["data"][0]["ordId"], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})
@@ -259,7 +262,7 @@ class AccountClient:
         try:
             res = await self._send_post("/api/v5/trade/order", params)
             if res.is_err():
-                return Result.err(res.unwrap_error(), res.extra)
+                return Result.err(res.expect_error(), res.extra)
             return Result.ok(res.unwrap()["data"][0]["ordId"], {"response": res})
         except Exception as e:
             return Result.err(e, {"response": res})

@@ -1,4 +1,4 @@
-from mm_std import print_table
+import mm_print
 
 from mm_okx.api.account import AccountClient
 from mm_okx.cli.commands.account_commands import BaseAccountParams
@@ -13,4 +13,4 @@ async def run(params: BaseAccountParams, ccy: str | None) -> None:
     headers = ["ccy", "avail", "frozen"]
 
     rows = [[b.ccy, b.avail, b.frozen] for b in res.unwrap()]
-    print_table("Funding Balances", headers, rows)
+    mm_print.print_table("Funding Balances", headers, rows)

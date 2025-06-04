@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from mm_std import print_table
+import mm_print
 
 from mm_okx.api.account import AccountClient
 from mm_okx.cli.commands.account_commands import BaseAccountParams
@@ -14,4 +14,4 @@ async def run(params: BaseAccountParams, ccy: str, amt: Decimal) -> None:
 
     headers = ["trans_id", "ccy", "client_id", "from", "amt", "to"]
     rows = [[t.trans_id, t.ccy, t.client_id, t.from_, t.amt, t.to] for t in res.unwrap()]
-    print_table("Transfer to Trading", headers, rows)
+    mm_print.print_table("Transfer to Trading", headers, rows)

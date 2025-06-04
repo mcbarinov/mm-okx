@@ -1,4 +1,4 @@
-from mm_std import print_table
+import mm_print
 
 from mm_okx.api.account import AccountClient
 from mm_okx.cli.commands.account_commands import BaseAccountParams
@@ -14,4 +14,4 @@ async def run(params: BaseAccountParams, ccy: str) -> None:
 
     rows = [[a.ccy, a.chain, a.addr] for a in res.unwrap()]
 
-    print_table(title="Deposit Address", columns=headers, rows=rows)
+    mm_print.print_table(title="Deposit Address", columns=headers, rows=rows)

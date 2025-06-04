@@ -1,4 +1,4 @@
-from mm_std import print_json
+import mm_print
 
 from mm_okx.api.public import PublicClient
 
@@ -6,4 +6,4 @@ from mm_okx.api.public import PublicClient
 async def run(inst_type: str, proxy: str | None) -> None:
     client = PublicClient(proxy=proxy)
     res = await client.get_instruments_raw(inst_type)
-    print_json(res)
+    mm_print.print_json(res)

@@ -1,4 +1,4 @@
-from mm_std import http_request
+from mm_http import http_request
 
 
 class PublicClient:

@@ -1,4 +1,4 @@
-from mm_std import print_json
+import mm_print
 
 from mm_okx.api.account import AccountClient
 from mm_okx.cli.commands.account_commands import BaseAccountParams
@@ -10,4 +10,4 @@ async def run(params: BaseAccountParams, inst_id: str | None) -> None:
     res = await client.get_order_history(inst_id)
     print_debug_or_error(res, params.debug)
 
-    print_json(res)
+    mm_print.print_json(res)

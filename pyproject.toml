@@ -1,11 +1,14 @@
 [project]
 name = "mm-okx"
-version = "0.2.2"
+version = "0.3.0"
 description = ""
 requires-python = ">=3.13"
 dependencies = [
-    "mm-std~=0.4.16",
-    "typer~=0.15.4",
+    "mm-http>=0.0.1",
+    "mm-print>=0.0.2",
+    "mm-result>=0.0.2",
+    "tomlkit~=0.13.2",
+    "typer~=0.16.0",
 ]
 [project.scripts]
 mm-okx = "mm_okx.cli.app:app"
@@ -16,11 +19,11 @@ build-backend = "hatchling.build"
 
 [tool.uv]
 dev-dependencies = [
-    "pytest~=8.3.5",
-    "pytest-asyncio~=0.26.0",
-    "pytest-xdist~=3.6.1",
-    "mypy~=1.15.0",
-    "ruff~=0.11.11",
+    "pytest~=8.4.0",
+    "pytest-asyncio~=1.0.0",
+    "pytest-xdist~=3.7.0",
+    "mypy~=1.16.0",
+    "ruff~=0.11.12",
     "pip-audit~=2.9.0",
     "bandit~=1.8.3",
     "pre-commit~=4.2.0",
