@@ -12,7 +12,7 @@ def print_debug_or_error(res: Result[Any], debug: bool) -> None:
         raise Exit
 
     if res.is_err():
-        mm_print.fatal(res.expect_error())
+        mm_print.fatal(res.unwrap_err())
 
 
 def format_ts(ts: int) -> str:
