@@ -22,7 +22,7 @@ app.add_typer(account_commands.app, name="a", hidden=True)
 
 def version_callback(value: bool) -> None:
     if value:
-        echo(f"mm-eth: {importlib.metadata.version('mm-okx')}")
+        echo(f"mm-okx: {importlib.metadata.version('mm-okx')}")
         raise Exit
 
 

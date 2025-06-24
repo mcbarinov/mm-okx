@@ -24,4 +24,4 @@ async def run(params: BaseAccountParams, ccy: str | None) -> None:
         ]
         for currency in res.unwrap()
     ]
-    mm_print.print_table("Currencies", headers, rows)
+    mm_print.table("Currencies", headers, rows)

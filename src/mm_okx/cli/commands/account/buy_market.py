@@ -12,4 +12,4 @@ async def run(params: BaseAccountParams, inst_id: str, sz: Decimal) -> None:
     res = await client.buy_market(inst_id, sz)
     print_debug_or_error(res, params.debug)
 
-    mm_print.print_json(res)
+    mm_print.json(res)

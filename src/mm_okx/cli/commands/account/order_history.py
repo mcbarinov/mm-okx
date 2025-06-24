@@ -10,4 +10,4 @@ async def run(params: BaseAccountParams, inst_id: str | None) -> None:
     res = await client.get_order_history(inst_id)
     print_debug_or_error(res, params.debug)
 
-    mm_print.print_json(res)
+    mm_print.json(res)

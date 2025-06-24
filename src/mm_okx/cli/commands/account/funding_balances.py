@@ -13,4 +13,4 @@ async def run(params: BaseAccountParams, ccy: str | None) -> None:
     headers = ["ccy", "avail", "frozen"]
 
     rows = [[b.ccy, b.avail, b.frozen] for b in res.unwrap()]
-    mm_print.print_table("Funding Balances", headers, rows)
+    mm_print.table("Funding Balances", headers, rows)

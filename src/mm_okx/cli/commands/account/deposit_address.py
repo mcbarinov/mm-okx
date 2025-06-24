@@ -14,4 +14,4 @@ async def run(params: BaseAccountParams, ccy: str) -> None:
 
     rows = [[a.ccy, a.chain, a.addr] for a in res.unwrap()]
 
-    mm_print.print_table(title="Deposit Address", columns=headers, rows=rows)
+    mm_print.table(title="Deposit Address", columns=headers, rows=rows)
