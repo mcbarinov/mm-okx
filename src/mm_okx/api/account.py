@@ -117,9 +117,9 @@ class AccountClient:
             res = await self._send_get("/api/v5/asset/currencies", params)
             if res.is_err():
                 return Result.err(res.unwrap_err(), res.extra)
-            return Result.ok([Currency(**c) for c in res.unwrap()["data"]], {"response": res})
+            return Result.ok([Currency(**c) for c in res.unwrap()["data"]], {"response": res.to_dict()})
         except Exception as e:
-            return Result.err(e, {"response": res})
+            return Result.err(e, {"response": res.to_dict() if res else None})
 
     async def get_funding_balances(self, ccy: str | None = None) -> Result[list[Balance]]:
         res = None
@@ -131,9 +131,9 @@ class AccountClient:
             balances = [
                 Balance(ccy=item["ccy"], avail=item["availBal"], frozen=item["frozenBal"]) for item in res.unwrap()["data"]
             ]
-            return Result.ok(balances, {"response": res})
+            return Result.ok(balances, {"response": res.to_dict()})
         except Exception as e:
-            return Result.err(e, {"response": res})
+            return Result.err(e, {"response": res.to_dict() if res else None})
 
     async def get_trading_balances(self, ccy: str | None = None) -> Result[list[Balance]]:
         res = None
@@ -145,9 +145,9 @@ class AccountClient:
             balances = [
                 Balance(ccy=i["ccy"], avail=i["availBal"], frozen=i["frozenBal"]) for i in res.unwrap()["data"][0]["details"]
             ]
-            return Result.ok(balances, {"response": res})
+            return Result.ok(balances, {"response": res.to_dict()})
         except Exception as e:
-            return Result.err(e, {"response": res})
+            return Result.err(e, {"response": res.to_dict() if res else None})
 
     async def get_deposit_address(self, ccy: str) -> Result[list[DepositAddress]]:
         res = None
@@ -155,9 +155,9 @@ class AccountClient:
             res = await self._send_get("/api/v5/asset/deposit-address", {"ccy": ccy})
             if res.is_err():
                 return Result.err(res.unwrap_err(), res.extra)
-            return Result.ok([DepositAddress(**a) for a in res.unwrap()["data"]], {"response": res})
+            return Result.ok([DepositAddress(**a) for a in res.unwrap()["data"]], {"response": res.to_dict()})
         except Exception as e:
-            return Result.err(e, {"response": res})
+            return Result.err(e, {"response": res.to_dict() if res else None})
 
     async def get_deposit_history(self, ccy: str | None = None) -> Result[list[DepositHistory]]:
         res = None
@@ -166,9 +166,9 @@ class AccountClient:
             res = await self._send_get("/api/v5/asset/deposit-history", params)
             if res.is_err():
                 return Result.err(res.unwrap_err(), res.extra)
-            return Result.ok([DepositHistory(**d) for d in res.unwrap()["data"]], {"response": res})
+            return Result.ok([DepositHistory(**d) for d in res.unwrap()["data"]], {"response": res.to_dict()})
         except Exception as e:
-            return Result.err(e, {"response": res})
+            return Result.err(e, {"response": res.to_dict() if res else None})
 
     async def get_withdrawal_history(self, ccy: str | None = None, wd_id: str | None = None) -> Result[list[WithdrawalHistory]]:
         res = None
@@ -177,9 +177,9 @@ class AccountClient:
             res = await self._send_get("/api/v5/asset/withdrawal-history", params)
             if res.is_err():
                 return Result.err(res.unwrap_err(), res.extra)
-            return Result.ok([WithdrawalHistory(**h) for h in res.unwrap()["data"]], {"response": res})
+            return Result.ok([WithdrawalHistory(**h) for h in res.unwrap()["data"]], {"response": res.to_dict()})
         except Exception as e:
-            return Result.err(e, {"response": res})
+            return Result.err(e, {"response": res.to_dict() if res else None})
 
     async def withdraw(
         self, *, ccy: str, amt: Decimal, fee: Decimal, to_addr: str, chain: str | None = None
@@ -192,12 +192,12 @@ class AccountClient:
                 return Result.err(res.unwrap_err(), res.extra)
             result = [Withdrawal(**w) for w in res.unwrap()["data"]]
             if result:
-                return Result.ok(result, {"response": res})
+                return Result.ok(result, {"response": res.to_dict()})
             # if res.get("code") == "58207":
             #     return Result.err("withdrawal_address_not_whitelisted", {"response": res})
-            return Result.err("error", {"response": res})
+            return Result.err("error", {"response": res.to_dict()})
         except Exception as e:
-            return Result.err(e, {"response": res})
+            return Result.err(e, {"response": res.to_dict() if res else None})
 
     async def transfer_to_funding(self, ccy: str, amt: Decimal) -> Result[list[Transfer]]:
         res = None
@@ -207,9 +207,9 @@ class AccountClient:
             )
             if res.is_err():
                 return Result.err(res.unwrap_err(), res.extra)
-            return Result.ok([Transfer(**t) for t in res.unwrap()["data"]], {"response": res})
+            return Result.ok([Transfer(**t) for t in res.unwrap()["data"]], {"response": res.to_dict()})
         except Exception as e:
-            return Result.err(e, {"response": res})
+            return Result.err(e, {"response": res.to_dict() if res else None})
 
     async def transfer_to_trading(self, ccy: str, amt: Decimal) -> Result[list[Transfer]]:
         res = None
@@ -219,9 +219,9 @@ class AccountClient:
             )
             if res.is_err():
                 return Result.err(res.unwrap_err(), res.extra)
-            return Result.ok([Transfer(**t) for t in res.unwrap()["data"]], {"response": res})
+            return Result.ok([Transfer(**t) for t in res.unwrap()["data"]], {"response": res.to_dict()})
         except Exception as e:
-            return Result.err(e, {"response": res})
+            return Result.err(e, {"response": res.to_dict() if res else None})
 
     async def transfer_to_parent(self, ccy: str, amount: Decimal) -> Result[list[Transfer]]:
         # type = 3: sub-account to master account (Only applicable to APIKey from sub-account)
@@ -232,9 +232,9 @@ class AccountClient:
             )
             if res.is_err():
                 return Result.err(res.unwrap_err(), res.extra)
-            return Result.ok([Transfer(**t) for t in res.unwrap()["data"]], {"response": res})
+            return Result.ok([Transfer(**t) for t in res.unwrap()["data"]], {"response": res.to_dict()})
         except Exception as e:
-            return Result.err(e, {"response": res})
+            return Result.err(e, {"response": res.to_dict() if res else None})
 
     async def buy_market(self, inst_id: str, sz: Decimal) -> Result[str]:
         """
@@ -248,9 +248,9 @@ class AccountClient:
             res = await self._send_post("/api/v5/trade/order", params)
             if res.is_err():
                 return Result.err(res.unwrap_err(), res.extra)
-            return Result.ok(res.unwrap()["data"][0]["ordId"], {"response": res})
+            return Result.ok(res.unwrap()["data"][0]["ordId"], {"response": res.to_dict()})
         except Exception as e:
-            return Result.err(e, {"response": res})
+            return Result.err(e, {"response": res.to_dict() if res else None})
 
     async def sell_market(self, inst_id: str, sz: Decimal) -> Result[str]:
         """
@@ -264,9 +264,9 @@ class AccountClient:
             res = await self._send_post("/api/v5/trade/order", params)
             if res.is_err():
                 return Result.err(res.unwrap_err(), res.extra)
-            return Result.ok(res.unwrap()["data"][0]["ordId"], {"response": res})
+            return Result.ok(res.unwrap()["data"][0]["ordId"], {"response": res.to_dict()})
         except Exception as e:
-            return Result.err(e, {"response": res})
+            return Result.err(e, {"response": res.to_dict() if res else None})
 
     async def get_order_history(self, inst_id: str | None = None) -> Result[JsonType]:
         url = "/api/v5/trade/orders-history-archive?instType=SPOT"
