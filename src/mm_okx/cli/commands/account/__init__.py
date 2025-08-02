@@ -1,4 +1,5 @@
 from . import (
+    balances,
     buy_market,
     currencies,
     deposit_address,
@@ -14,6 +15,7 @@ from . import (
 )
 
 __all__ = [
+    "balances",
     "buy_market",
     "currencies",
     "deposit_address",

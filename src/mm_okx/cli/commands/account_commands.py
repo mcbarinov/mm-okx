@@ -56,6 +56,11 @@ def deposit_history_command(ctx: Context, ccy: CcyOptionalOption = None) -> None
     asyncio.run(commands.account.deposit_history.run(BaseAccountParams.from_ctx(ctx), ccy))
 
 
+@app.command(name="balances")
+def balances_command(ctx: Context, ccy: CcyOptionalOption = None) -> None:
+    asyncio.run(commands.account.balances.run(BaseAccountParams.from_ctx(ctx), ccy))
+
+
 @app.command(name="funding-balances")
 def funding_balances_command(ctx: Context, ccy: CcyOptionalOption = None) -> None:
     asyncio.run(commands.account.funding_balances.run(BaseAccountParams.from_ctx(ctx), ccy))
