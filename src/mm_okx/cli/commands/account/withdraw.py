@@ -22,4 +22,4 @@ async def run(*, params: BaseAccountParams, ccy: str, amt: Decimal, fee: Decimal
         ]
         for t in res.unwrap()
     ]
-    mm_print.table("Withdrawal", headers, rows)
+    mm_print.table(headers, rows, title="Withdrawal")

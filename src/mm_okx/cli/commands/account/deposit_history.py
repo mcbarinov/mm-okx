@@ -25,4 +25,4 @@ async def run(params: BaseAccountParams, ccy: str | None) -> None:
         ]
         for a in res.unwrap()
     ]
-    mm_print.table("Deposit History", headers, rows)
+    mm_print.table(headers, rows, title="Deposit History")

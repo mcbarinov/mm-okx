@@ -305,10 +305,10 @@ class AccountClient:
         if res.is_err():
             return res.to_result_err()
 
-        json_body = res.parse_json_body()
+        json_body = res.parse_json()
         if json_body.get("code") != "0":
             error_msg = f"{json_body.get('msg')}, code: {json_body.get('code')}"
-            return Result.err(error_msg, {"response": res.to_dict()})
+            return Result.err(error_msg, {"response": res.model_dump()})
 
         return res.to_result_ok(cast(JsonType, json_body))
 

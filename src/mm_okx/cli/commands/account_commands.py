@@ -30,7 +30,7 @@ class BaseAccountParams(BaseModel):
     debug: bool
 
     @staticmethod
-    def from_ctx(ctx: Context) -> "BaseAccountParams":
+    def from_ctx(ctx: Context) -> BaseAccountParams:
         debug = ctx.obj.get("debug", False)
         account = ctx.obj.get("account", False)
         return BaseAccountParams(account=AccountConfig.from_toml_file(account), debug=debug)

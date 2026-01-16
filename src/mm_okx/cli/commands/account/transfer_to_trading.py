@@ -14,4 +14,4 @@ async def run(params: BaseAccountParams, ccy: str, amt: Decimal) -> None:
 
     headers = ["trans_id", "ccy", "client_id", "from", "amt", "to"]
     rows = [[t.trans_id, t.ccy, t.client_id, t.from_, t.amt, t.to] for t in res.unwrap()]
-    mm_print.table("Transfer to Trading", headers, rows)
+    mm_print.table(headers, rows, title="Transfer to Trading")

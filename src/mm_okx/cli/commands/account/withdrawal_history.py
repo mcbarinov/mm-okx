@@ -25,4 +25,4 @@ async def run(params: BaseAccountParams, ccy: str | None, wd_id: str | None) -> 
         ]
         for t in res.unwrap()
     ]
-    mm_print.table("Withdrawal History", headers, rows)
+    mm_print.table(headers, rows, title="Withdrawal History")
