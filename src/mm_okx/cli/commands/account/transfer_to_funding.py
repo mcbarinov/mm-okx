@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-import mm_print
+import mm_clikit
 
 from mm_okx.api.account import AccountClient
 from mm_okx.cli.commands.account_commands import BaseAccountParams
@@ -14,4 +14,4 @@ async def run(params: BaseAccountParams, ccy: str, amt: Decimal) -> None:
 
     headers = ["trans_id", "ccy", "client_id", "from", "amt", "to"]
     rows = [[t.trans_id, t.ccy, t.client_id, t.from_, t.amt, t.to] for t in res.unwrap()]
-    mm_print.table(headers, rows, title="Transfer to Funding")
+    mm_clikit.print_table(headers, rows, title="Transfer to Funding")

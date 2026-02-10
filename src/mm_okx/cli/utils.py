@@ -1,18 +1,18 @@
 from datetime import UTC, datetime
 from typing import Any
 
-import mm_print
+import mm_clikit
 from click.exceptions import Exit
 from mm_result import Result
 
 
 def print_debug_or_error(res: Result[Any], debug: bool) -> None:
     if debug:
-        mm_print.json(res)
+        mm_clikit.print_json(res)
         raise Exit
 
     if res.is_err():
-        mm_print.exit_with_error(res.unwrap_err())
+        mm_clikit.fatal(res.unwrap_err())
 
 
 def format_ts(ts: int) -> str:

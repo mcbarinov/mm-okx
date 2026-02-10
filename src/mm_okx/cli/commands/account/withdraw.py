@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-import mm_print
+import mm_clikit
 
 from mm_okx.api.account import AccountClient
 from mm_okx.cli.commands.account_commands import BaseAccountParams
@@ -22,4 +22,4 @@ async def run(*, params: BaseAccountParams, ccy: str, amt: Decimal, fee: Decimal
         ]
         for t in res.unwrap()
     ]
-    mm_print.table(headers, rows, title="Withdrawal")
+    mm_clikit.print_table(headers, rows, title="Withdrawal")

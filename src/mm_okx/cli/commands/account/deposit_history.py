@@ -1,4 +1,4 @@
-import mm_print
+import mm_clikit
 
 from mm_okx.api.account import AccountClient
 from mm_okx.cli.commands.account_commands import BaseAccountParams
@@ -25,4 +25,4 @@ async def run(params: BaseAccountParams, ccy: str | None) -> None:
         ]
         for a in res.unwrap()
     ]
-    mm_print.table(headers, rows, title="Deposit History")
+    mm_clikit.print_table(headers, rows, title="Deposit History")

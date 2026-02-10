@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-import mm_print
+import mm_clikit
 
 from mm_okx.api.account import AccountClient
 from mm_okx.cli.commands.account_commands import BaseAccountParams
@@ -12,4 +12,4 @@ async def run(params: BaseAccountParams, inst_id: str, sz: Decimal) -> None:
     res = await client.sell_market(inst_id, sz)
     print_debug_or_error(res, params.debug)
 
-    mm_print.json(res)
+    mm_clikit.print_json(res)

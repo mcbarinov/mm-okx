@@ -3,8 +3,9 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Annotated
 
+from mm_clikit import TyperPlus
 from pydantic import BaseModel
-from typer import BadParameter, Context, Option, Typer
+from typer import BadParameter, Context, Option
 
 from mm_okx.api.account import AccountConfig
 from mm_okx.cli import commands
@@ -17,7 +18,7 @@ def decimal_parser(value: str) -> Decimal:
         raise BadParameter(f"Invalid decimal: {value}") from None
 
 
-app = Typer(no_args_is_help=True, help="Account API commands")
+app = TyperPlus(help="Account API commands")
 InstIdOption = Annotated[str, Option()]
 SzOption = Annotated[Decimal, Option(parser=decimal_parser)]
 AmtOption = Annotated[Decimal, Option(parser=decimal_parser)]
@@ -33,7 +34,7 @@ class BaseAccountParams(BaseModel):
     def from_ctx(ctx: Context) -> BaseAccountParams:
         debug = ctx.obj.get("debug", False)
         account = ctx.obj.get("account", False)
-        return BaseAccountParams(account=AccountConfig.from_toml_file(account), debug=debug)
+        return BaseAccountParams(account=AccountConfig.load_or_exit(account), debug=debug)
 
 
 @app.command(name="buy-market")
@@ -41,7 +42,7 @@ def buy_market_command(ctx: Context, inst_id: InstIdOption, sz: SzOption) -> Non
     asyncio.run(commands.account.buy_market.run(BaseAccountParams.from_ctx(ctx), inst_id, sz))
 
 
-@app.command(name="currencies")
+@app.command(name="currencies", aliases=["c"])
 def currencies_command(ctx: Context, ccy: CcyOptionalOption = None) -> None:
     asyncio.run(commands.account.currencies.run(BaseAccountParams.from_ctx(ctx), ccy))
 
@@ -56,7 +57,7 @@ def deposit_history_command(ctx: Context, ccy: CcyOptionalOption = None) -> None
     asyncio.run(commands.account.deposit_history.run(BaseAccountParams.from_ctx(ctx), ccy))
 
 
-@app.command(name="balances")
+@app.command(name="balances", aliases=["b"])
 def balances_command(ctx: Context, ccy: CcyOptionalOption = None) -> None:
     asyncio.run(commands.account.balances.run(BaseAccountParams.from_ctx(ctx), ccy))
 

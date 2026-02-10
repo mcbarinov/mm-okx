@@ -4,16 +4,14 @@ import json
 import logging
 from datetime import UTC, datetime
 from decimal import Decimal
-from pathlib import Path
-from typing import Any, Self, cast
+from typing import Any, cast
 from urllib.parse import urlencode
 
+from mm_clikit import TomlConfig
 from mm_http import http_request
 from mm_result import Result
-from mm_std import replace_empty_dict_entries
+from mm_std import compact_dict
 from pydantic import BaseModel, Field
-
-from mm_okx.utils import toml_loads
 
 type JsonType = dict[str, Any]
 
@@ -84,21 +82,12 @@ class Transfer(BaseModel):
     to: str
 
 
-class AccountConfig(BaseModel):
+class AccountConfig(TomlConfig):
     name: str
     api_key: str
     secret_key: str
     passphrase: str
     proxy: str | None = None
-
-    @classmethod
-    def from_toml_file(cls, path: Path) -> Self:
-        """
-        Load the configuration from a TOML file.
-        """
-
-        config = toml_loads(path.read_text())
-        return cls(**config)
 
 
 class AccountClient:
@@ -116,7 +105,7 @@ class AccountClient:
             params = {"ccy": ccy} if ccy else None
             res = await self._send_get("/api/v5/asset/currencies", params)
             if res.is_err():
-                return Result.err(res.unwrap_err(), res.extra)
+                return Result.err(res.unwrap_err(), res.context)
             return Result.ok([Currency(**c) for c in res.unwrap()["data"]], {"response": res.to_dict()})
         except Exception as e:
             return Result.err(e, {"response": res.to_dict() if res else None})
@@ -127,7 +116,7 @@ class AccountClient:
             params = {"ccy": ccy} if ccy else None
             res = await self._send_get("/api/v5/asset/balances", params)
             if res.is_err():
-                return Result.err(res.unwrap_err(), res.extra)
+                return Result.err(res.unwrap_err(), res.context)
             balances = [
                 Balance(ccy=item["ccy"], avail=item["availBal"], frozen=item["frozenBal"]) for item in res.unwrap()["data"]
             ]
@@ -141,7 +130,7 @@ class AccountClient:
             params = {"ccy": ccy} if ccy else None
             res = await self._send_get("/api/v5/account/balance", params)
             if res.is_err():
-                return Result.err(res.unwrap_err(), res.extra)
+                return Result.err(res.unwrap_err(), res.context)
             balances = [
                 Balance(ccy=i["ccy"], avail=i["availBal"], frozen=i["frozenBal"]) for i in res.unwrap()["data"][0]["details"]
             ]
@@ -154,7 +143,7 @@ class AccountClient:
         try:
             res = await self._send_get("/api/v5/asset/deposit-address", {"ccy": ccy})
             if res.is_err():
-                return Result.err(res.unwrap_err(), res.extra)
+                return Result.err(res.unwrap_err(), res.context)
             return Result.ok([DepositAddress(**a) for a in res.unwrap()["data"]], {"response": res.to_dict()})
         except Exception as e:
             return Result.err(e, {"response": res.to_dict() if res else None})
@@ -162,10 +151,10 @@ class AccountClient:
     async def get_deposit_history(self, ccy: str | None = None) -> Result[list[DepositHistory]]:
         res = None
         try:
-            params = replace_empty_dict_entries({"ccy": ccy})
+            params = compact_dict({"ccy": ccy})
             res = await self._send_get("/api/v5/asset/deposit-history", params)
             if res.is_err():
-                return Result.err(res.unwrap_err(), res.extra)
+                return Result.err(res.unwrap_err(), res.context)
             return Result.ok([DepositHistory(**d) for d in res.unwrap()["data"]], {"response": res.to_dict()})
         except Exception as e:
             return Result.err(e, {"response": res.to_dict() if res else None})
@@ -173,10 +162,10 @@ class AccountClient:
     async def get_withdrawal_history(self, ccy: str | None = None, wd_id: str | None = None) -> Result[list[WithdrawalHistory]]:
         res = None
         try:
-            params = replace_empty_dict_entries({"ccy": ccy, "wdId": wd_id})
+            params = compact_dict({"ccy": ccy, "wdId": wd_id})
             res = await self._send_get("/api/v5/asset/withdrawal-history", params)
             if res.is_err():
-                return Result.err(res.unwrap_err(), res.extra)
+                return Result.err(res.unwrap_err(), res.context)
             return Result.ok([WithdrawalHistory(**h) for h in res.unwrap()["data"]], {"response": res.to_dict()})
         except Exception as e:
             return Result.err(e, {"response": res.to_dict() if res else None})
@@ -189,7 +178,7 @@ class AccountClient:
         try:
             res = await self._send_post("/api/v5/asset/withdrawal", params)
             if res.is_err():
-                return Result.err(res.unwrap_err(), res.extra)
+                return Result.err(res.unwrap_err(), res.context)
             result = [Withdrawal(**w) for w in res.unwrap()["data"]]
             if result:
                 return Result.ok(result, {"response": res.to_dict()})
@@ -206,7 +195,7 @@ class AccountClient:
                 "/api/v5/asset/transfer", {"ccy": ccy, "amt": str(amt), "from": "18", "to": "6", "type": "0"}
             )
             if res.is_err():
-                return Result.err(res.unwrap_err(), res.extra)
+                return Result.err(res.unwrap_err(), res.context)
             return Result.ok([Transfer(**t) for t in res.unwrap()["data"]], {"response": res.to_dict()})
         except Exception as e:
             return Result.err(e, {"response": res.to_dict() if res else None})
@@ -218,7 +207,7 @@ class AccountClient:
                 "/api/v5/asset/transfer", {"ccy": ccy, "amt": str(amt), "from": "6", "to": "18", "type": "0"}
             )
             if res.is_err():
-                return Result.err(res.unwrap_err(), res.extra)
+                return Result.err(res.unwrap_err(), res.context)
             return Result.ok([Transfer(**t) for t in res.unwrap()["data"]], {"response": res.to_dict()})
         except Exception as e:
             return Result.err(e, {"response": res.to_dict() if res else None})
@@ -231,7 +220,7 @@ class AccountClient:
                 "/api/v5/asset/transfer", {"ccy": ccy, "amt": str(amount), "from": "6", "to": "6", "type": "3"}
             )
             if res.is_err():
-                return Result.err(res.unwrap_err(), res.extra)
+                return Result.err(res.unwrap_err(), res.context)
             return Result.ok([Transfer(**t) for t in res.unwrap()["data"]], {"response": res.to_dict()})
         except Exception as e:
             return Result.err(e, {"response": res.to_dict() if res else None})
@@ -247,7 +236,7 @@ class AccountClient:
         try:
             res = await self._send_post("/api/v5/trade/order", params)
             if res.is_err():
-                return Result.err(res.unwrap_err(), res.extra)
+                return Result.err(res.unwrap_err(), res.context)
             return Result.ok(res.unwrap()["data"][0]["ordId"], {"response": res.to_dict()})
         except Exception as e:
             return Result.err(e, {"response": res.to_dict() if res else None})
@@ -263,7 +252,7 @@ class AccountClient:
         try:
             res = await self._send_post("/api/v5/trade/order", params)
             if res.is_err():
-                return Result.err(res.unwrap_err(), res.extra)
+                return Result.err(res.unwrap_err(), res.context)
             return Result.ok(res.unwrap()["data"][0]["ordId"], {"response": res.to_dict()})
         except Exception as e:
             return Result.err(e, {"response": res.to_dict() if res else None})
@@ -305,7 +294,12 @@ class AccountClient:
         if res.is_err():
             return res.to_result_err()
 
-        json_body = res.parse_json()
+        json_body_res = res.json_body()
+        if json_body_res.is_err():
+            return res.to_result_err("invalid_json_response")
+
+        json_body = json_body_res.unwrap()
+
         if json_body.get("code") != "0":
             error_msg = f"{json_body.get('msg')}, code: {json_body.get('code')}"
             return Result.err(error_msg, {"response": res.model_dump()})

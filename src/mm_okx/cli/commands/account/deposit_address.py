@@ -1,4 +1,4 @@
-import mm_print
+import mm_clikit
 
 from mm_okx.api.account import AccountClient
 from mm_okx.cli.commands.account_commands import BaseAccountParams
@@ -14,4 +14,4 @@ async def run(params: BaseAccountParams, ccy: str) -> None:
 
     rows = [[a.ccy, a.chain, a.addr] for a in res.unwrap()]
 
-    mm_print.table(title="Deposit Address", columns=headers, rows=rows)
+    mm_clikit.print_table(title="Deposit Address", columns=headers, rows=rows)

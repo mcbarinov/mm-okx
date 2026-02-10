@@ -1,4 +1,4 @@
-import mm_print
+import mm_clikit
 
 from mm_okx.api.account import AccountClient
 from mm_okx.cli.commands.account_commands import BaseAccountParams
@@ -12,11 +12,11 @@ async def run(params: BaseAccountParams, ccy: str | None) -> None:
 
     headers = ["ccy", "avail", "frozen"]
     rows = [[b.ccy, b.avail, b.frozen] for b in res.unwrap()]
-    mm_print.table(headers, rows, title="Funding Balances")
+    mm_clikit.print_table(headers, rows, title="Funding Balances")
 
     res = await client.get_trading_balances(ccy)
     print_debug_or_error(res, params.debug)
 
     headers = ["ccy", "avail", "frozen"]
     rows = [[b.ccy, b.avail, b.frozen] for b in res.unwrap()]
-    mm_print.table(headers, rows, title="Trading Balances")
+    mm_clikit.print_table(headers, rows, title="Trading Balances")

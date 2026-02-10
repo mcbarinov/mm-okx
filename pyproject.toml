@@ -1,9 +1,9 @@
 [project]
 name = "mm-okx"
-version = "0.3.5"
+version = "0.3.6"
 description = ""
 requires-python = ">=3.14"
-dependencies = ["mm-http~=0.2.5", "mm-print~=0.2.3", "typer~=0.21.1"]
+dependencies = ["mm-http~=0.3.1", "mm-clikit~=0.0.5"]
 [project.scripts]
 mm-okx = "mm_okx.cli.main:app"
 
@@ -15,12 +15,12 @@ build-backend = "hatchling.build"
 dev = [
     "pytest~=9.0.2",
     "pytest-xdist~=3.8.0",
-    "ruff~=0.14.13",
+    "ruff~=0.15.0",
     "mypy~=1.19.1",
     "pip-audit~=2.10.0",
-    "bandit~=1.9.2",
+    "bandit~=1.9.3",
     "pre-commit~=4.5.1",
-    "ty~=0.0.12",
+    "ty~=0.0.15",
     "python-dotenv~=1.2.1",
 ]
 
@@ -71,7 +71,3 @@ indent-style = "space"
 [tool.bandit]
 exclude_dirs = ["tests"]
 skips = ["B311"]
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
