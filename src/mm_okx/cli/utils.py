@@ -8,7 +8,7 @@ from mm_result import Result
 
 def print_debug_or_error(res: Result[Any], debug: bool) -> None:
     if debug:
-        mm_clikit.print_json(res)
+        mm_clikit.print_json(res.to_dict(safe_exception=True))
         raise Exit
 
     if res.is_err():

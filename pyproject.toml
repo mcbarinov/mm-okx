@@ -1,6 +1,6 @@
 [project]
 name = "mm-okx"
-version = "0.3.6"
+version = "0.3.7"
 description = ""
 requires-python = ">=3.14"
 dependencies = ["mm-http~=0.3.1", "mm-clikit~=0.0.5"]
